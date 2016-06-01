@@ -26,11 +26,11 @@
     <!-- Default action for flip (turn face down) during alarm
          0 means no action, 1 means snooze
          2 means dismiss. -->
-    <integer name="config_defaultActionFlip">2</integer>
+    <integer name="config_defaultActionFlip">1</integer>
     <!-- Default action for shake during alarm
          0 means no action, 1 means snooze
          2 means dismiss. -->
-    <integer name="config_defaultActionShake">0</integer>
+    <integer name="config_defaultActionShake">2</integer>
 
     <item type="integer" name="timer_column_count">1</item>
     <!-- Number of world clocks in a row, for the clock tab. -->
