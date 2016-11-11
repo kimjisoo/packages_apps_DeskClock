@@ -56,8 +56,10 @@
     <color name="material_grey_900">#ff212121</color>
     <color name="view_background">@color/material_grey_300</color>
     <color name="window_background">@color/material_grey_100</color>
+    <color name="navbar_background">@color/material_grey_300</color>
     <color name="view_background_dark">@color/material_grey_850</color>
     <color name="window_background_dark">@color/material_grey_900</color>
+    <color name="navbar_background_dark">@color/material_grey_600</color>
     <color name="primary">#245c75</color>
     <color name="primary_dark">#183d4d</color>
     <color name="primary_light">#30245c75</color>
