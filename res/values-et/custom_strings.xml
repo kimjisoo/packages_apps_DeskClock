@@ -76,6 +76,7 @@
   <string name="prealarm_default_label">Eel-äratus</string>
   <string name="fullscreen_alarm_settings">Täisekraanil äratused</string>
   <string name="fullscreen_alarm_title">Täisekraanil äratused</string>
+  <string name="fullscreen_alarm_summary">Kasuta alati täisekraanis äratusi piiluva teate asemel</string>
   <string name="notification_settings">Teated</string>
   <!-- User-defined cities -->
   <string name="menu_item_add">Lisa</string>
@@ -115,6 +116,8 @@
   <string name="editor_save">Salvesta muudatused</string>
   <string name="menu_item_spotify">Spotify</string>
   <string name="wear_notification_title">Luba kantavate teated</string>
+  <string name="pre_alarm_notification_show_title">Tulevate äratuste teated</string>
+  <string name="pre_alarm_notification_show_summary">Kuva teateid tulevatele äratustele</string>
   <string name="color_theme_light">Hele</string>
   <string name="color_theme_dark">Tume</string>
   <string name="color_theme_title">Teema</string>

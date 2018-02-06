@@ -181,6 +181,7 @@ public class AlarmKlaxon {
         sIncreasingVolume = instance.getIncreasingVolume(sPreAlarmMode);
         sRandomPlayback = instance.getRandomMode(sPreAlarmMode);
         sFirstFile = true;
+        sStarted = true;
 
         if (sPreAlarmMode) {
             sMaxVolume = calcNormalizedVolume(context, instance.mPreAlarmVolume);
@@ -288,7 +289,6 @@ public class AlarmKlaxon {
             Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
             vibrator.vibrate(sVibratePattern, 0);
         }
-        sStarted = true;
 
         if (sStreamMediaMode) {
             IntentFilter intentFilter = new IntentFilter();
@@ -301,6 +301,9 @@ public class AlarmKlaxon {
         LogUtils.v("playAlarm");
         if (sMediaPlayer != null) {
             sMediaPlayer.reset();
+        }
+        if (!sStarted) {
+            return;
         }
         sMediaPlayer = new MediaPlayer();
         sMediaPlayer.setOnErrorListener(new OnErrorListener() {
@@ -363,6 +366,9 @@ public class AlarmKlaxon {
 
     // Do the common stuff when starting the alarm.
     private static void startAlarm(final Context context, MediaPlayer player) throws IOException {
+        if (!sStarted) {
+            return;
+        }
         LogUtils.v("startAlarm");
 
         LogUtils.v("Using audio stream " + (getAudioStream(context) == AudioManager.STREAM_MUSIC ? "Music" : "Alarm"));

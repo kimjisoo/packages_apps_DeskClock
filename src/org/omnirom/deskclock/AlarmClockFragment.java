@@ -437,6 +437,7 @@ public class AlarmClockFragment extends DeskClockFragment implements
             TextView prealarmRingtone;
             ImageButton clone;
             ImageView alarmInidicator;
+            View alarmContainer;
             // Other states
             Alarm alarm;
         }
@@ -451,8 +452,6 @@ public class AlarmClockFragment extends DeskClockFragment implements
             mLongWeekDayStrings = dfs.getWeekdays();
 
             updateDayOrder();
-
-            Resources res = mContext.getResources();
 
             mHasVibrator = ((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE))
                     .hasVibrator();
@@ -487,24 +486,6 @@ public class AlarmClockFragment extends DeskClockFragment implements
                 weekDayList.add(s);
             }
             return weekDayList.toArray(new String[weekDayList.size()]);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (!getCursor().moveToPosition(position)) {
-                // May happen if the last alarm was deleted and the cursor refreshed while the
-                // list is updated.
-                LogUtils.v("couldn't move cursor to position " + position);
-                return null;
-            }
-            View v;
-            //if (convertView == null) {
-            v = newView(mContext, getCursor(), parent);
-            //} else {
-            //    v = convertView;
-            //}
-            bindView(v, mContext, getCursor());
-            return v;
         }
 
         @Override
@@ -555,6 +536,7 @@ public class AlarmClockFragment extends DeskClockFragment implements
             holder.prealarmRingtone = (TextView) view.findViewById(R.id.prealarm_choose_ringtone);
             holder.clone = (ImageButton) view.findViewById(R.id.clone);
             holder.alarmInidicator = (ImageView) view.findViewById(R.id.alarm_inidicator);
+            holder.alarmContainer = view.findViewById(R.id.alarm_container);
             view.setTag(holder);
         }
 
@@ -599,33 +581,11 @@ public class AlarmClockFragment extends DeskClockFragment implements
                     asyncUpdateAlarm(alarm, alarm.enabled);
                 }
             });
-            if (itemHolder.alarm.daysOfWeek.isRepeating()) {
-                itemHolder.tomorrowLabel.setVisibility(View.GONE);
-            } else {
-                itemHolder.tomorrowLabel.setVisibility(View.VISIBLE);
-                final Resources resources = getResources();
-                final String labelText = isTomorrow(alarm) ?
-                        resources.getString(R.string.alarm_tomorrow) :
-                        resources.getString(R.string.alarm_today);
-                itemHolder.tomorrowLabel.setText(labelText);
-            }
 
             boolean expanded = isAlarmExpanded(alarm);
 
             itemHolder.expandArea.setVisibility(expanded ? View.VISIBLE : View.GONE);
             itemHolder.arrow.setRotation(expanded ? ROTATE_180_DEGREE : 0);
-
-            // Set the repeat text or leave it blank if it does not repeat.
-            final String daysOfWeekStr =
-                    alarm.daysOfWeek.toString(AlarmClockFragment.this.getActivity(), false, DAY_ORDER);
-            if (daysOfWeekStr != null && daysOfWeekStr.length() != 0) {
-                itemHolder.daysOfWeek.setText(daysOfWeekStr);
-                itemHolder.daysOfWeek.setContentDescription(alarm.daysOfWeek.toAccessibilityString(
-                        AlarmClockFragment.this.getActivity(), DAY_ORDER));
-                itemHolder.daysOfWeek.setVisibility(View.VISIBLE);
-            } else {
-                itemHolder.daysOfWeek.setVisibility(View.GONE);
-            }
 
             itemHolder.delete.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -660,6 +620,8 @@ public class AlarmClockFragment extends DeskClockFragment implements
                 expandAlarm(itemHolder, false);
             }
 
+            updateAlarmLabel(itemHolder);
+
             itemHolder.arrow.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -677,7 +639,7 @@ public class AlarmClockFragment extends DeskClockFragment implements
             final int alarmHour = alarm.hour;
             final int currHour = now.get(Calendar.HOUR_OF_DAY);
             return alarmHour < currHour ||
-                    (alarmHour == currHour && alarm.minutes < now.get(Calendar.MINUTE));
+                    (alarmHour == currHour && alarm.minutes <= now.get(Calendar.MINUTE));
         }
 
         private void bindExpandArea(final ItemHolder itemHolder, final Alarm alarm) {
@@ -716,6 +678,7 @@ public class AlarmClockFragment extends DeskClockFragment implements
                     }
 
                     asyncUpdateAlarm(alarm, false);
+                    updateAlarmLabel(itemHolder);
                 }
             });
 
@@ -745,6 +708,7 @@ public class AlarmClockFragment extends DeskClockFragment implements
                             }
                         }
                         asyncUpdateAlarm(alarm, false);
+                        updateAlarmLabel(itemHolder);
                     }
                 });
             }
@@ -962,7 +926,7 @@ public class AlarmClockFragment extends DeskClockFragment implements
                     holder.clock.setTextColor(getResources().getColor(R.color.white_30p));
                     holder.alarmInidicator.setColorFilter(getResources().getColor(R.color.white_30p), PorterDuff.Mode.SRC_IN);
                 }
-                holder.alarmInidicator.setImageResource(R.drawable.ic_alarm_off_new);
+                holder.alarmInidicator.setImageResource(R.drawable.ic_alarm_off);
             }
         }
 
@@ -1023,9 +987,12 @@ public class AlarmClockFragment extends DeskClockFragment implements
             if (mExpandedId != Alarm.INVALID_ID
                     && mExpandedId != itemHolder.alarm.id) {
                 View v = getViewById(mExpandedId);
-                if (v != null && v.getTag() != null) {
-                    // Only allow one alarm to expand at a time.
-                    collapseAlarm((ItemHolder) v.getTag(), animate);
+                if (v != null) {
+                    ItemHolder holder = (ItemHolder) v.getTag();
+                    if (holder != null && holder.alarm.id != itemHolder.alarm.id) {
+                        // Only allow one alarm to expand at a time.
+                        collapseAlarm((ItemHolder) v.getTag(), animate);
+                    }
                 }
             }
 
@@ -1038,6 +1005,7 @@ public class AlarmClockFragment extends DeskClockFragment implements
                 expandAni.setAnimationListener(new AnimationListener() {
                     @Override
                     public void onAnimationEnd(Animation animation) {
+                        itemHolder.alarmContainer.requestLayout();
                     }
 
                     @Override
@@ -1057,6 +1025,7 @@ public class AlarmClockFragment extends DeskClockFragment implements
                 itemHolder.expandArea.setVisibility(View.VISIBLE);
                 itemHolder.arrow.setRotation(ROTATE_180_DEGREE);
                 itemHolder.summary.setEnabled(true);
+                itemHolder.alarmContainer.requestLayout();
             }
         }
 
@@ -1069,6 +1038,20 @@ public class AlarmClockFragment extends DeskClockFragment implements
 
             if (animate) {
                 ExpandAnimation expandAni = new ExpandAnimation(itemHolder.expandArea, COLLAPSE_DURATION);
+                expandAni.setAnimationListener(new AnimationListener() {
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        itemHolder.alarmContainer.requestLayout();
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                    }
+
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                    }
+                });
                 itemHolder.expandArea.startAnimation(expandAni);
 
                 itemHolder.summary.setEnabled(false);
@@ -1080,6 +1063,7 @@ public class AlarmClockFragment extends DeskClockFragment implements
                 itemHolder.expandArea.setVisibility(View.GONE);
                 itemHolder.arrow.setRotation(ROTATE_0_DEGREE);
                 itemHolder.summary.setEnabled(false);
+                itemHolder.alarmContainer.requestLayout();
             }
         }
 
@@ -1111,6 +1095,31 @@ public class AlarmClockFragment extends DeskClockFragment implements
                 }
             }
             return alarmPosition;
+        }
+
+        private void updateAlarmLabel(ItemHolder itemHolder) {
+            if (itemHolder.alarm.daysOfWeek.isRepeating()) {
+                itemHolder.tomorrowLabel.setVisibility(View.GONE);
+            } else {
+                itemHolder.tomorrowLabel.setVisibility(View.VISIBLE);
+                final Resources resources = getResources();
+                final String labelText = isTomorrow(itemHolder.alarm) ?
+                        resources.getString(R.string.alarm_tomorrow) :
+                        resources.getString(R.string.alarm_today);
+                itemHolder.tomorrowLabel.setText(labelText);
+            }
+
+            // Set the repeat text or leave it blank if it does not repeat.
+            final String daysOfWeekStr =
+                    itemHolder.alarm.daysOfWeek.toString(AlarmClockFragment.this.getActivity(), false, DAY_ORDER);
+            if (daysOfWeekStr != null && daysOfWeekStr.length() != 0) {
+                itemHolder.daysOfWeek.setText(daysOfWeekStr);
+                itemHolder.daysOfWeek.setContentDescription(itemHolder.alarm.daysOfWeek.toAccessibilityString(
+                        AlarmClockFragment.this.getActivity(), DAY_ORDER));
+                itemHolder.daysOfWeek.setVisibility(View.VISIBLE);
+            } else {
+                itemHolder.daysOfWeek.setVisibility(View.GONE);
+            }
         }
     }
 
